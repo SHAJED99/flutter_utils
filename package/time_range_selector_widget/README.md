@@ -1,39 +1,43 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# Time Range Selector Widget
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/guides/libraries/writing-package-pages).
+Easily select time range.
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-library-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/developing-packages).
--->
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+# Getting Started
 
-## Features
-
-TODO: List what your package can do. Maybe include images, gifs, or videos.
-
-## Getting started
-
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
-
-## Usage
-
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
+Add TimeRangeSelectorWidget widget to your project
 
 ```dart
-const like = 'sample';
+TimeRangeSelectorWidget(
+    initialTime: 2,
+    maxTime: 10,
+    stockColor: Colors.green,
+    shadowColorLight: Colors.white.withOpacity(0.5),
+    shadowColorDark: Theme.of(context).shadowColor.withOpacity(0.5),
+    colorGradient: const [
+        Color(0xFFF5F5F9),
+        Color(0xFFE4E8EE),
+    ],
+    backgroundColor: const [
+        Color(0xFFF5F5F9),
+        Color(0xFFE4E8EE),
+    ],
+    onChangeValue: (currentTime) {
+        // TODO: Add your callback function Here
+    },
+    childBuilder: (currentTime) {
+        // TODO: Add your widget Here
+        return Center(
+            child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+                Text(currentTime.toString(), style: const TextStyle(fontSize: 70, fontWeight: FontWeight.bold, height: 1)),
+                Text(currentTime > 1 ? "Hours" : "Hour", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.normal)),
+            ],
+            ),
+        );
+    },
+),
 ```
 
-## Additional information
-
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+<img src="/screenshots/1.gif" alt="screenshot"/>

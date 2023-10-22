@@ -7,9 +7,9 @@ license: BSD 3-Clause
 
 
 topics:
-  - time range
+  - time-range
   - time
-  - time selector
+  - time-selector
 
 
 environment:

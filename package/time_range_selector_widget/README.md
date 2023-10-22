@@ -7,6 +7,9 @@ Easily select time range.
 
 Add TimeRangeSelectorWidget widget to your project
 
+1. Add "flutter_inset_box_shadow" package from pub.dev
+
+2. Add this code in your project.
 ```dart
 TimeRangeSelectorWidget(
     initialTime: 2,

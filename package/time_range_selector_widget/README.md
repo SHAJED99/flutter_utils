@@ -40,4 +40,4 @@ TimeRangeSelectorWidget(
 ),
 ```
 
-<img src="/screenshots/1.gif" alt="screenshot"/>
+![Screenshot](screenshots/1.gif)

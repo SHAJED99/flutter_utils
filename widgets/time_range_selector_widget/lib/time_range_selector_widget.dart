@@ -7,7 +7,7 @@ class TimeRangeSelectorWidget extends StatefulWidget {
   const TimeRangeSelectorWidget({
     super.key,
     required this.initialTime,
-    this.minTime = 1,
+    // this.minTime = 1,
     this.maxTime = 12,
     this.stockWidth = 24 * 2,
     this.padding = 8,
@@ -24,7 +24,7 @@ class TimeRangeSelectorWidget extends StatefulWidget {
   });
 
   final int initialTime;
-  final int minTime;
+  final int minTime = 1;
   final int maxTime;
   final double stockWidth;
   final double padding;

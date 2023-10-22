@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
             width: 300,
             child: TimeRangeSelectorWidget(
               initialTime: 2,
-              maxTime: 24,
+              maxTime: 10,
               stockColor: Colors.amber,
               shadowColorLight: Colors.white.withOpacity(0.5),
               shadowColorDark: Theme.of(context).shadowColor.withOpacity(0.5),
@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(currentTime.toString(), style: const TextStyle(fontSize: 70, fontWeight: FontWeight.bold, height: 1)),
-                      const Text("Hour", style: TextStyle(fontSize: 20, fontWeight: FontWeight.normal)),
+                      Text(currentTime > 1 ? "Hours" : "Hour", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.normal)),
                     ],
                   ),
                 );

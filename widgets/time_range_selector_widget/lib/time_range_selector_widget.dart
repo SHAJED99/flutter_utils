@@ -21,6 +21,7 @@ class TimeRangeSelectorWidget extends StatefulWidget {
     this.onChangeValue,
     this.childBuilder,
     required this.colorGradient,
+    this.dotBuilder,
   });
 
   final int initialTime;
@@ -36,6 +37,7 @@ class TimeRangeSelectorWidget extends StatefulWidget {
   final List<Color> backgroundColor;
   final Function(int currentTime)? onChangeValue;
   final Widget Function(int currentTime)? childBuilder;
+  final Function(int itemIndex, Offset offset, Canvas canvas)? dotBuilder;
 
   @override
   State<TimeRangeSelectorWidget> createState() => _TimeRangeSelectorWidgetState();
@@ -132,6 +134,7 @@ class _TimeRangeSelectorWidgetState extends State<TimeRangeSelectorWidget> {
                   stokeWidth: widget.stockWidth,
                   stockColor: widget.stockColor,
                   padding: widget.padding,
+                  dotBuilder: widget.dotBuilder,
                 ),
               ),
             ),

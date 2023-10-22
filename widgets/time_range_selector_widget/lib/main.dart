@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
             child: TimeRangeSelectorWidget(
               initialTime: 2,
               maxTime: 10,
-              stockColor: Colors.amber,
+              stockColor: Colors.green,
               shadowColorLight: Colors.white.withOpacity(0.5),
               shadowColorDark: Theme.of(context).shadowColor.withOpacity(0.5),
               colorGradient: const [

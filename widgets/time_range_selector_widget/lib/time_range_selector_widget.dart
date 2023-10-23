@@ -7,7 +7,7 @@ class TimeRangeSelectorWidget extends StatefulWidget {
   const TimeRangeSelectorWidget({
     super.key,
     required this.initialTime,
-    // this.minTime = 1,
+    this.minTime = 0,
     this.maxTime = 12,
     this.stockWidth = 24 * 2,
     this.padding = 8,
@@ -22,22 +22,54 @@ class TimeRangeSelectorWidget extends StatefulWidget {
     this.childBuilder,
     required this.colorGradient,
     this.dotBuilder,
+    this.dotHandleColor = Colors.white,
+    this.indexPointerDotColor = Colors.black,
   });
 
+  /// A callback function called when the selected time changes.
+  final Function(int currentTime)? onChangeValue;
+
+  /// A builder function to provide custom child widgets based on the selected time.
+  final Widget Function(int currentTime)? childBuilder;
+
+  /// A builder function to provide custom dots at specific positions.
+  final Function(int itemIndex, Offset offset, Canvas canvas)? dotBuilder;
+
+  /// Background colors.
+  final List<Color> backgroundColor;
+
+  /// Colors gradient for the circular canvas.
+  final List<Color> colorGradient;
+
+  /// Handler dot color.
+  final Color dotHandleColor;
+
+  /// Small index dots color.
+  final Color indexPointerDotColor;
+
+  /// The initial time value of the selector.
   final int initialTime;
-  final int minTime = 1;
+
+  /// The maximum selectable time value.
   final int maxTime;
-  final double stockWidth;
+
+  /// The minimum selectable time value.
+  final int minTime;
+
+  /// Padding and shadow size
   final double padding;
 
-  final Color stockColor;
-  final List<Color> colorGradient;
-  final Color shadowColorLight;
+  /// Shadow color for dark area.
   final Color shadowColorDark;
-  final List<Color> backgroundColor;
-  final Function(int currentTime)? onChangeValue;
-  final Widget Function(int currentTime)? childBuilder;
-  final Function(int itemIndex, Offset offset, Canvas canvas)? dotBuilder;
+
+  /// Shadow color for light area.
+  final Color shadowColorLight;
+
+  /// Circular line color
+  final Color stockColor;
+
+  /// The width of the circular line.
+  final double stockWidth;
 
   @override
   State<TimeRangeSelectorWidget> createState() => _TimeRangeSelectorWidgetState();
@@ -50,12 +82,18 @@ class _TimeRangeSelectorWidgetState extends State<TimeRangeSelectorWidget> {
   @override
   void initState() {
     super.initState();
-    currentTime = widget.initialTime;
-    totalTime = widget.maxTime - widget.minTime + 2;
-    if (widget.maxTime <= widget.minTime) throw Exception("Max Time must be greater than min time");
-    if (currentTime < widget.minTime || currentTime > widget.maxTime) throw Exception("Current time must be in time range (Max and min time)");
+    if (widget.initialTime < widget.minTime || widget.initialTime > widget.maxTime) {
+      throw Exception("Current time must be in time range (Max and min time)");
+    }
+    currentTime = widget.initialTime - widget.minTime;
+
+    totalTime = widget.maxTime - widget.minTime + 1;
+    if (widget.maxTime <= widget.minTime) {
+      throw Exception("Max Time must be greater than min time");
+    }
   }
 
+  /// Builds the circular box that contains the clock selector.
   Widget drawBox({required BuildContext context, Widget? child}) {
     return Container(
       alignment: Alignment.center,
@@ -84,15 +122,17 @@ class _TimeRangeSelectorWidgetState extends State<TimeRangeSelectorWidget> {
     );
   }
 
+  /// Handles the time change when dragging.
   changeTime(double angle) async {
     int i = ((angle / 360) * totalTime).round();
-    if (i > widget.maxTime) i = 0;
+    if (i >= totalTime) i = 0;
     if (currentTime != i && widget.onChangeValue != null) {
       if (mounted) setState(() => currentTime = i);
-      widget.onChangeValue!(i);
+      widget.onChangeValue!(i + widget.minTime);
     }
   }
 
+  /// Calculates the angle of a point relative to the center of the clock selector.
   double angleCounter(Size size, DragUpdateDetails details) {
     final centerX = size.width / 2;
     final centerY = size.height / 2;
@@ -114,7 +154,7 @@ class _TimeRangeSelectorWidgetState extends State<TimeRangeSelectorWidget> {
           clipBehavior: Clip.antiAlias,
           alignment: Alignment.center,
           children: [
-            //! -------------------------------------------------------------------------------------- Background
+            /// -------------------------------------------------------------------------------------- Background
             Positioned.fill(
               child: Container(
                 clipBehavior: Clip.antiAlias,
@@ -125,33 +165,35 @@ class _TimeRangeSelectorWidgetState extends State<TimeRangeSelectorWidget> {
               ),
             ),
 
-            //! -------------------------------------------------------------------------------------- Line
+            /// -------------------------------------------------------------------------------------- Line
             Positioned.fill(
               child: CustomPaint(
-                painter: CustomClockPickerPaint(
+                painter: _CustomClockPickerPaint(
                   time: currentTime,
                   totalTime: totalTime,
                   stokeWidth: widget.stockWidth,
                   stockColor: widget.stockColor,
                   padding: widget.padding,
                   dotBuilder: widget.dotBuilder,
+                  dotHandleColor: widget.dotHandleColor,
+                  indexPointerDotColor: widget.indexPointerDotColor,
                 ),
               ),
             ),
 
-            //! -------------------------------------------------------------------------------------- Back Canvas
+            /// -------------------------------------------------------------------------------------- Back Canvas
             Positioned.fill(child: drawBox(context: context)),
 
-            //! -------------------------------------------------------------------------------------- Front Canvas
+            /// -------------------------------------------------------------------------------------- Front Canvas
             drawBox(
               context: context,
               child: AspectRatio(
                 aspectRatio: 1,
-                child: widget.childBuilder == null ? const SizedBox() : widget.childBuilder!(currentTime),
+                child: widget.childBuilder == null ? const SizedBox() : widget.childBuilder!(currentTime + widget.minTime),
               ),
             ),
 
-            //! -------------------------------------------------------------------------------------- Draggable
+            /// -------------------------------------------------------------------------------------- Draggable
             Positioned.fill(
               child: GestureDetector(
                 onPanUpdate: (details) {
@@ -184,23 +226,26 @@ class _TimeRangeSelectorWidgetState extends State<TimeRangeSelectorWidget> {
   }
 }
 
-class CustomClockPickerPaint extends CustomPainter {
-  final int time;
-  final int totalTime;
-  final double stokeWidth;
-  final double padding;
-  final Color stockColor;
-  final Function(int itemIndex, Offset offset, Canvas canvas)? dotBuilder;
-
-  CustomClockPickerPaint({
-    super.repaint,
+class _CustomClockPickerPaint extends CustomPainter {
+  _CustomClockPickerPaint({
     required this.time,
     required this.totalTime,
     required this.stokeWidth,
     required this.padding,
     required this.stockColor,
     this.dotBuilder,
+    required this.dotHandleColor,
+    required this.indexPointerDotColor,
   });
+
+  final Function(int itemIndex, Offset offset, Canvas canvas)? dotBuilder;
+  final Color dotHandleColor;
+  final Color indexPointerDotColor;
+  final double padding;
+  final Color stockColor;
+  final double stokeWidth;
+  final int time;
+  final int totalTime;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -221,7 +266,7 @@ class CustomClockPickerPaint extends CustomPainter {
     canvas.drawArc(arcRect, -pi / 2, currentAngle, false, arcPaint);
 
     //! -------------------------------------------------------------------------------------------- Small Dot
-    final smallDotColor = Paint()..color = Colors.black;
+    final smallDotColor = Paint()..color = indexPointerDotColor;
     for (var i = 0; i < totalTime; i++) {
       final smallDotX = centerX + radius * cos((270 + (360 * i / totalTime)) * pi / 180);
       final smallDotY = centerY + radius * sin((270 + (360 * i / totalTime)) * pi / 180);
@@ -235,7 +280,7 @@ class CustomClockPickerPaint extends CustomPainter {
     }
 
     //! -------------------------------------------------------------------------------------------- Big Dot
-    final fillPaint = Paint()..color = Colors.white;
+    final fillPaint = Paint()..color = dotHandleColor;
     final dotX = centerX + radius * cos((270 + (360 * time / totalTime)) * pi / 180);
     final dotY = centerY + radius * sin((270 + (360 * time / totalTime)) * pi / 180);
     canvas.drawCircle(Offset(dotX, dotY), (stokeWidth / 2) - padding, fillPaint);

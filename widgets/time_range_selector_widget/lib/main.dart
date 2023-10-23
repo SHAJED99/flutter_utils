@@ -19,8 +19,10 @@ class MyApp extends StatelessWidget {
             height: 300,
             width: 300,
             child: TimeRangeSelectorWidget(
-              initialTime: 2,
+              initialTime: 4,
+              minTime: 0,
               maxTime: 10,
+              padding: 8,
               stockColor: Colors.green,
               shadowColorLight: Colors.white.withOpacity(0.5),
               shadowColorDark: Theme.of(context).shadowColor.withOpacity(0.5),
@@ -28,10 +30,10 @@ class MyApp extends StatelessWidget {
                 Color(0xFFF5F5F9),
                 Color(0xFFE4E8EE),
               ],
-              backgroundColor: const [
-                Color(0xFFF5F5F9),
-                Color(0xFFE4E8EE),
-              ],
+              // backgroundColor: const [
+              //   Color(0xFFF5F5F9),
+              //   Color(0xFFE4E8EE),
+              // ],
               onChangeValue: (currentTime) {
                 print(currentTime);
               },

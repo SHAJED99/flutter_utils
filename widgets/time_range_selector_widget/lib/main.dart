@@ -9,7 +9,7 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   final initialValue = 2;
-  final minTime = 2;
+  final minTime = 0;
   final maxTime = 12;
   final double stockWidth = 24 * 2;
 
@@ -52,25 +52,25 @@ class MyApp extends StatelessWidget {
                         ],
                       ),
                     ),
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(currentTime.toString(), style: const TextStyle(fontSize: 70, fontWeight: FontWeight.bold, height: 1)),
-                          Text(currentTime > 1 ? "Hours" : "Hour", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.normal)),
-                        ],
-                      ),
-                    ),
-
                     // child: Center(
                     //   child: Column(
                     //     mainAxisSize: MainAxisSize.min,
                     //     children: [
-                    //       Text((currentTime * 5).toString(), style: const TextStyle(fontSize: 70, fontWeight: FontWeight.bold, height: 1)),
-                    //       Text(currentTime > 0 ? "Minutes" : "Minute", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.normal)),
+                    //       Text(currentTime.toString(), style: const TextStyle(fontSize: 70, fontWeight: FontWeight.bold, height: 1)),
+                    //       Text(currentTime > 1 ? "Hours" : "Hour", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.normal)),
                     //     ],
                     //   ),
                     // ),
+
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text((currentTime * 5).toString(), style: const TextStyle(fontSize: 70, fontWeight: FontWeight.bold, height: 1)),
+                          Text(currentTime > 0 ? "Minutes" : "Minute", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.normal)),
+                        ],
+                      ),
+                    ),
                   );
                 },
                 // backgroundColor: Colors.amberAccent,
@@ -94,11 +94,9 @@ class MyApp extends StatelessWidget {
 
                 // positionalDotSize: 24,
                 // positionalDotColor: Colors.black54,
-                // positionalDotBuilder: (itemIndex, offset) {
-                //   return Container(
-                //     child: FittedBox(child: Text((itemIndex + minTime).toString())),
-                //   );
-                // },
+                positionalDotBuilder: (itemIndex, offset) {
+                  return FittedBox(child: Text((itemIndex + minTime).toString()));
+                },
               ),
             ),
           ),

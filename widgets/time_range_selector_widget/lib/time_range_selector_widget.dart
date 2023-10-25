@@ -6,46 +6,48 @@ import 'package:flutter_inset_box_shadow/flutter_inset_box_shadow.dart';
 class TimeRangeSelectorWidget extends StatefulWidget {
   const TimeRangeSelectorWidget({
     super.key,
-    required this.initialTime,
+    this.initialTime = 0,
     this.minTime = 0,
     this.maxTime = 12,
+    this.handlePadding = 12,
     this.stockWidth = 24 * 2,
-    this.padding = 8,
-    required this.stockColor,
-    this.shadowColorLight = Colors.white,
-    this.shadowColorDark = const Color(0XFF8E9BAE),
-    this.backgroundColor = const [
-      Colors.white,
-      Colors.white,
-    ],
-    this.onChangeValue,
+    this.depth = 3,
+    this.stockColor,
+    this.backgroundColor,
+    this.shadowColorDark,
+    this.shadowColorLight,
     this.childBuilder,
-    required this.colorGradient,
-    this.dotBuilder,
-    this.dotHandleColor = Colors.white,
-    this.indexPointerDotColor = Colors.black,
+    this.positionalDotBuilder,
+    this.positionalDotSize = 8,
+    this.positionalDotColor = Colors.black,
+    this.handleColor,
+    this.handleBuilder,
+    this.onChangeValue,
   });
-
-  /// A callback function called when the selected time changes.
-  final Function(int currentTime)? onChangeValue;
 
   /// A builder function to provide custom child widgets based on the selected time.
   final Widget Function(int currentTime)? childBuilder;
 
   /// A builder function to provide custom dots at specific positions.
-  final Function(int itemIndex, Offset offset, Canvas canvas)? dotBuilder;
+  final Function(int itemIndex, Offset offset)? positionalDotBuilder;
 
-  /// Background colors.
-  final List<Color> backgroundColor;
+  /// A builder function to provide custom dots at handle positions.
+  final Function(int itemIndex, Offset offset)? handleBuilder;
 
-  /// Colors gradient for the circular canvas.
-  final List<Color> colorGradient;
+  /// A callback function called when the selected time changes.
+  final Function(int currentTime)? onChangeValue;
 
-  /// Handler dot color.
-  final Color dotHandleColor;
+  /// Canvas background color
+  final Color? backgroundColor;
 
-  /// Small index dots color.
-  final Color indexPointerDotColor;
+  /// Canvas depth
+  final double depth;
+
+  /// Handle point color
+  final Color? handleColor;
+
+  /// Handle point padding from Stock
+  final double handlePadding;
 
   /// The initial time value of the selector.
   final int initialTime;
@@ -56,19 +58,22 @@ class TimeRangeSelectorWidget extends StatefulWidget {
   /// The minimum selectable time value.
   final int minTime;
 
-  /// Padding and shadow size
-  final double padding;
+  /// Positional dots color.
+  final Color positionalDotColor;
 
-  /// Shadow color for dark area.
-  final Color shadowColorDark;
+  /// Positional dots size.
+  final double positionalDotSize;
 
-  /// Shadow color for light area.
-  final Color shadowColorLight;
+  /// Depth shadow Color
+  final Color? shadowColorDark;
 
-  /// Circular line color
-  final Color stockColor;
+  /// Depth shadow Color
+  final Color? shadowColorLight;
 
-  /// The width of the circular line.
+  /// Stock / Progress bar color
+  final Color? stockColor;
+
+  /// Stock / Progress bar width
   final double stockWidth;
 
   @override
@@ -76,45 +81,51 @@ class TimeRangeSelectorWidget extends StatefulWidget {
 }
 
 class _TimeRangeSelectorWidgetState extends State<TimeRangeSelectorWidget> {
-  late int currentTime;
-  late int totalTime;
+  late int currentPosition;
+  late int totalPosition;
 
   @override
   void initState() {
     super.initState();
+
     if (widget.initialTime < widget.minTime || widget.initialTime > widget.maxTime) {
       throw Exception("Current time must be in time range (Max and min time)");
     }
-    currentTime = widget.initialTime - widget.minTime;
+    currentPosition = widget.initialTime - widget.minTime;
 
-    totalTime = widget.maxTime - widget.minTime + 1;
     if (widget.maxTime <= widget.minTime) {
       throw Exception("Max Time must be greater than min time");
     }
+    totalPosition = widget.maxTime - widget.minTime + 1;
   }
 
-  /// Builds the circular box that contains the clock selector.
-  Widget drawBox({required BuildContext context, Widget? child}) {
+  Widget drawBox({required BuildContext context, Widget? child, bool? isHandle}) {
+    double s = isHandle != null ? widget.depth / 2 : widget.depth;
     return Container(
-      alignment: Alignment.center,
       clipBehavior: Clip.antiAlias,
+      alignment: Alignment.center,
       margin: child == null ? null : EdgeInsets.all(widget.stockWidth),
       decoration: BoxDecoration(
+        color: isHandle != null
+            ? isHandle
+                ? widget.handleColor ?? Theme.of(context).canvasColor
+                : widget.positionalDotColor
+            : child == null
+                ? null
+                : Theme.of(context).canvasColor,
         shape: BoxShape.circle,
-        gradient: child == null ? null : LinearGradient(colors: widget.colorGradient),
-        color: child == null ? null : Theme.of(context).canvasColor,
         boxShadow: [
           BoxShadow(
-            color: widget.shadowColorLight,
-            blurRadius: widget.padding / 2,
-            offset: Offset(-widget.padding / 2, -widget.padding / 2),
-            inset: child == null, // This line should be comment if you don't want to use "flutter_inset_box_shadow" package
+            color: widget.shadowColorLight ?? Theme.of(context).cardColor.withOpacity(0.5),
+            blurRadius: s,
+            offset: Offset(-s, -s),
+            inset: isHandle != null ? !isHandle : child == null, // This line should be comment if you don't want to use "flutter_inset_box_shadow" package
           ),
           BoxShadow(
-            color: widget.shadowColorDark,
-            blurRadius: widget.padding / 2,
-            offset: Offset(widget.padding / 2, widget.padding / 2),
-            inset: child == null, // This line should be comment if you don't want to use "flutter_inset_box_shadow" package
+            color: widget.shadowColorDark ?? Theme.of(context).shadowColor.withOpacity(0.5),
+            blurRadius: s,
+            offset: Offset(s, s),
+            inset: isHandle != null ? !isHandle : child == null, // This line should be comment if you don't want to use "flutter_inset_box_shadow" package
           ),
         ],
       ),
@@ -122,13 +133,51 @@ class _TimeRangeSelectorWidgetState extends State<TimeRangeSelectorWidget> {
     );
   }
 
+  Widget dot(double centerX, double centerY, double radius, int index, bool isHandle) {
+    Offset offset = _countOffset(centerX: centerX, centerY: centerY, radius: radius, currentPosition: index, totalPosition: totalPosition);
+
+    Widget w;
+
+    if (isHandle) {
+      if (widget.handleBuilder == null) {
+        w = Padding(
+          padding: EdgeInsets.all(widget.handlePadding / 2),
+          child: drawBox(context: context, isHandle: true),
+        );
+      } else {
+        w = widget.handleBuilder!(index, offset);
+      }
+    } else {
+      if (widget.positionalDotBuilder == null) {
+        w = SizedBox(
+          width: widget.positionalDotSize,
+          height: widget.positionalDotSize,
+          child: drawBox(context: context, isHandle: false),
+        );
+      } else {
+        w = widget.positionalDotBuilder!(index, offset);
+      }
+    }
+
+    return Positioned(
+      left: offset.dx - (widget.stockWidth / 2),
+      top: offset.dy - (widget.stockWidth / 2),
+      child: Container(
+        alignment: Alignment.center,
+        width: widget.stockWidth,
+        height: widget.stockWidth,
+        child: w,
+      ),
+    );
+  }
+
   /// Handles the time change when dragging.
   changeTime(double angle) async {
-    int i = ((angle / 360) * totalTime).round();
-    if (i >= totalTime) i = 0;
-    if (currentTime != i && widget.onChangeValue != null) {
-      if (mounted) setState(() => currentTime = i);
-      widget.onChangeValue!(i + widget.minTime);
+    int i = ((angle / 360) * totalPosition).round();
+    if (i >= totalPosition) i = 0;
+    if (currentPosition != i) {
+      if (mounted) setState(() => currentPosition = i);
+      if (widget.onChangeValue != null) widget.onChangeValue!(i + widget.minTime);
     }
   }
 
@@ -149,99 +198,98 @@ class _TimeRangeSelectorWidgetState extends State<TimeRangeSelectorWidget> {
   Widget build(BuildContext context) {
     return AspectRatio(
       aspectRatio: 1,
-      child: LayoutBuilder(builder: (context, box) {
-        return Stack(
-          clipBehavior: Clip.antiAlias,
-          alignment: Alignment.center,
-          children: [
-            /// -------------------------------------------------------------------------------------- Background
-            Positioned.fill(
-              child: Container(
-                clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(colors: widget.backgroundColor),
-                ),
-              ),
-            ),
+      child: LayoutBuilder(
+        builder: (context, box) {
+          double centerX = box.maxWidth / 2;
+          double centerY = box.maxHeight / 2;
+          final radius = min((box.maxHeight / 2) - (widget.stockWidth / 2), (box.maxWidth / 2) - (widget.stockWidth / 2));
 
-            /// -------------------------------------------------------------------------------------- Line
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _CustomClockPickerPaint(
-                  time: currentTime,
-                  totalTime: totalTime,
-                  stokeWidth: widget.stockWidth,
-                  stockColor: widget.stockColor,
-                  padding: widget.padding,
-                  dotBuilder: widget.dotBuilder,
-                  dotHandleColor: widget.dotHandleColor,
-                  indexPointerDotColor: widget.indexPointerDotColor,
-                ),
-              ),
-            ),
-
-            /// -------------------------------------------------------------------------------------- Back Canvas
-            Positioned.fill(child: drawBox(context: context)),
-
-            /// -------------------------------------------------------------------------------------- Front Canvas
-            drawBox(
-              context: context,
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: widget.childBuilder == null ? const SizedBox() : widget.childBuilder!(currentTime + widget.minTime),
-              ),
-            ),
-
-            /// -------------------------------------------------------------------------------------- Draggable
-            Positioned.fill(
-              child: GestureDetector(
-                onPanUpdate: (details) {
-                  double angle = angleCounter(Size(box.maxWidth, box.maxHeight), details);
-                  changeTime(angle);
-                },
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.transparent,
-                    shape: BoxShape.circle,
+          return Container(
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: widget.backgroundColor),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                /// -------------------------------------------------------------------------------------- Line
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _CustomClockPickerPaint(
+                      stockColor: widget.stockColor ?? Theme.of(context).primaryColor,
+                      stokeWidth: widget.stockWidth,
+                      time: currentPosition,
+                      totalTime: totalPosition,
+                      positionalDotSize: widget.positionalDotSize,
+                      positionalDotColor: widget.positionalDotColor,
+                    ),
                   ),
                 ),
-              ),
-            ),
 
-            //! Blocking Touch
-            Positioned.fill(
-              child: Container(
-                margin: EdgeInsets.all(widget.stockWidth),
-                decoration: const BoxDecoration(
-                  color: Colors.transparent,
-                  shape: BoxShape.circle,
+                /// -------------------------------------------------------------------------------------- Back Canvas
+                Positioned.fill(child: drawBox(context: context)),
+
+                /// -------------------------------------------------------------------------------------- Front Canvas
+                drawBox(
+                  context: context,
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: widget.childBuilder == null ? const SizedBox() : widget.childBuilder!(currentPosition + widget.minTime),
+                  ),
                 ),
-              ),
+
+                /// --------------------------------------------------------------------------------------- Small Dots
+                for (int i = 0; i < totalPosition; i++) dot(centerX, centerY, radius, i, false),
+
+                /// --------------------------------------------------------------------------------------- Big Dot
+                dot(centerX, centerY, radius, currentPosition, true),
+
+                /// --------------------------------------------------------------------------------------- Draggable
+                Positioned.fill(
+                  child: GestureDetector(
+                    onPanUpdate: (details) {
+                      double angle = angleCounter(Size(box.maxWidth, box.maxHeight), details);
+                      // print(angle);
+                      changeTime(angle);
+                    },
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.transparent,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ),
+
+                //! Blocking Touch
+                Positioned.fill(
+                  child: Container(
+                    margin: EdgeInsets.all(widget.stockWidth),
+                    decoration: const BoxDecoration(
+                      color: Colors.transparent,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        );
-      }),
+          );
+        },
+      ),
     );
   }
 }
 
 class _CustomClockPickerPaint extends CustomPainter {
-  _CustomClockPickerPaint({
+  const _CustomClockPickerPaint({
+    required this.stockColor,
+    required this.stokeWidth,
     required this.time,
     required this.totalTime,
-    required this.stokeWidth,
-    required this.padding,
-    required this.stockColor,
-    this.dotBuilder,
-    required this.dotHandleColor,
-    required this.indexPointerDotColor,
+    required this.positionalDotSize,
+    required this.positionalDotColor,
   });
 
-  final Function(int itemIndex, Offset offset, Canvas canvas)? dotBuilder;
-  final Color dotHandleColor;
-  final Color indexPointerDotColor;
-  final double padding;
+  final Color positionalDotColor;
+  final double positionalDotSize;
   final Color stockColor;
   final double stokeWidth;
   final int time;
@@ -262,32 +310,17 @@ class _CustomClockPickerPaint extends CustomPainter {
       ..isAntiAlias = true
       ..color = stockColor;
     double currentAngle = time * (2 * pi) / totalTime;
+    if (currentAngle == 0) currentAngle = 0.0001;
     final arcRect = Rect.fromCircle(center: center, radius: radius);
     canvas.drawArc(arcRect, -pi / 2, currentAngle, false, arcPaint);
-
-    //! -------------------------------------------------------------------------------------------- Small Dot
-    final smallDotColor = Paint()..color = indexPointerDotColor;
-    for (var i = 0; i < totalTime; i++) {
-      final smallDotX = centerX + radius * cos((270 + (360 * i / totalTime)) * pi / 180);
-      final smallDotY = centerY + radius * sin((270 + (360 * i / totalTime)) * pi / 180);
-      final offset = Offset(smallDotX, smallDotY);
-
-      if (dotBuilder != null) {
-        dotBuilder!(i, offset, canvas);
-      } else {
-        canvas.drawCircle(offset, padding / 3, smallDotColor);
-      }
-    }
-
-    //! -------------------------------------------------------------------------------------------- Big Dot
-    final fillPaint = Paint()..color = dotHandleColor;
-    final dotX = centerX + radius * cos((270 + (360 * time / totalTime)) * pi / 180);
-    final dotY = centerY + radius * sin((270 + (360 * time / totalTime)) * pi / 180);
-    canvas.drawCircle(Offset(dotX, dotY), (stokeWidth / 2) - padding, fillPaint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
-  }
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+Offset _countOffset({required double centerX, required double centerY, required double radius, required int currentPosition, required int totalPosition}) {
+  double x = centerX + radius * cos((270 + (360 * currentPosition / totalPosition)) * pi / 180);
+  double y = centerY + radius * sin((270 + (360 * currentPosition / totalPosition)) * pi / 180);
+  return Offset(x, y);
 }

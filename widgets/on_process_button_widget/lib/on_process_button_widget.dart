@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 class OnProcessButtonWidget extends StatefulWidget {
@@ -37,6 +38,8 @@ class OnProcessButtonWidget extends StatefulWidget {
     this.enableFeedback = true,
     this.splashColor,
     this.textStyle,
+    this.onHover,
+    this.onHovering,
   });
 
   final bool enable;
@@ -73,6 +76,8 @@ class OnProcessButtonWidget extends StatefulWidget {
   final Color? splashColor;
   final bool enableFeedback;
   final TextStyle? textStyle;
+  final Function(bool isEnter)? onHover;
+  final void Function(PointerHoverEvent offset)? onHovering;
 
   @override
   State<OnProcessButtonWidget> createState() => _OnProcessButtonWidgetState();
@@ -107,8 +112,14 @@ class _OnProcessButtonWidgetState extends State<OnProcessButtonWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedSize(
-      duration: widget.animationDuration,
+    return MouseRegion(
+      onEnter: (_) {
+        if (widget.onHover != null) widget.onHover!(true);
+      },
+      onExit: (_) {
+        if (widget.onHover != null) widget.onHover!(false);
+      },
+      onHover: widget.onHovering,
       child: Container(
         margin: widget.margin,
         clipBehavior: Clip.antiAlias,
@@ -163,19 +174,22 @@ class _OnProcessButtonWidgetState extends State<OnProcessButtonWidget> {
                     if (mounted) setState(() => isRunning = _ButtonStatus.stable);
                     if (widget.onStatusChange != null) widget.onStatusChange!(0); // Stable
                   },
-            child: Container(
-              height: widget.height,
-              width: widget.width,
-              padding: widget.contentPadding,
-              constraints: widget.constraints,
-              alignment: isRunning == _ButtonStatus.stable
-                  ? widget.expanded
-                      ? widget.alignment
-                      : null
-                  : widget.expandedIcon ?? widget.expanded
-                      ? widget.alignment
-                      : null,
-              child: child(context),
+            child: AnimatedSize(
+              duration: widget.animationDuration,
+              child: Container(
+                height: widget.height,
+                width: widget.width,
+                padding: widget.contentPadding,
+                constraints: widget.constraints,
+                alignment: isRunning == _ButtonStatus.stable
+                    ? widget.expanded
+                        ? widget.alignment
+                        : null
+                    : widget.expandedIcon ?? widget.expanded
+                        ? widget.alignment
+                        : null,
+                child: child(context),
+              ),
             ),
           ),
         ),

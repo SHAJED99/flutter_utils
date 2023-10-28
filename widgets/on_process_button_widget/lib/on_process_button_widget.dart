@@ -40,6 +40,27 @@ class OnProcessButtonWidget extends StatefulWidget {
     this.textStyle,
     this.onHover,
     this.onHovering,
+    this.focusNode,
+    this.focusColor,
+    this.highlightColor,
+    this.hoverColor,
+    this.mouseCursor,
+    this.onDoubleTap,
+    this.onFocusChange,
+    this.onHighlightChanged,
+    this.onSecondaryTap,
+    this.onSecondaryTapCancel,
+    this.overlayColor,
+    this.onSecondaryTapUp,
+    this.onSecondaryTapDown,
+    this.splashFactory,
+    this.statesController,
+    this.textAlign = TextAlign.center,
+    this.textOverflow = TextOverflow.clip,
+    this.textHeightBehavior,
+    this.textMaxLines,
+    this.textWrap = true,
+    this.textWidthBasis = TextWidthBasis.parent,
   });
 
   final bool enable;
@@ -69,15 +90,36 @@ class OnProcessButtonWidget extends StatefulWidget {
   final Widget? onSuccessWidget;
   final Widget? onErrorWidget;
   final Color? iconColor;
-  final void Function(TapUpDetails)? onTapUp;
-  final void Function(TapDownDetails)? onTapDown;
+  final void Function(TapUpDetails tapUpDetails)? onTapUp;
+  final void Function(TapDownDetails tapDownDetails)? onTapDown;
   final void Function()? onTapCancel;
   final bool autofocus;
   final Color? splashColor;
   final bool enableFeedback;
   final TextStyle? textStyle;
+  final TextAlign textAlign;
+  final TextOverflow textOverflow;
+  final bool textWrap;
+  final TextWidthBasis textWidthBasis;
+  final TextHeightBehavior? textHeightBehavior;
+  final int? textMaxLines;
   final Function(bool isEnter)? onHover;
   final void Function(PointerHoverEvent offset)? onHovering;
+  final FocusNode? focusNode;
+  final Color? focusColor;
+  final Color? highlightColor;
+  final Color? hoverColor;
+  final MouseCursor? mouseCursor;
+  final void Function()? onDoubleTap;
+  final void Function(bool isFocused)? onFocusChange;
+  final void Function(bool isHighlighted)? onHighlightChanged;
+  final void Function()? onSecondaryTap;
+  final void Function(TapUpDetails tapUpDetails)? onSecondaryTapUp;
+  final void Function(TapDownDetails tapDownDetails)? onSecondaryTapDown;
+  final void Function()? onSecondaryTapCancel;
+  final MaterialStateProperty<Color?>? overlayColor;
+  final InteractiveInkFeatureFactory? splashFactory;
+  final MaterialStatesController? statesController;
 
   @override
   State<OnProcessButtonWidget> createState() => _OnProcessButtonWidgetState();
@@ -103,11 +145,24 @@ class _OnProcessButtonWidgetState extends State<OnProcessButtonWidget> {
 
   Widget child(BuildContext context) {
     Color c = widget.iconColor ?? Theme.of(context).canvasColor;
-    if (isRunning == _ButtonStatus.running) return statusChild(widget.onRunningWidget ?? CircularProgressIndicator(color: c));
-    if (isRunning == _ButtonStatus.success) return statusChild(widget.onSuccessWidget ?? Icon(Icons.done, color: c));
-    if (isRunning == _ButtonStatus.error) return statusChild(widget.onErrorWidget ?? Icon(Icons.error, color: c));
+    if (isRunning == _ButtonStatus.running) return widget.onRunningWidget ?? statusChild(CircularProgressIndicator(color: c));
+    if (isRunning == _ButtonStatus.success) return widget.onSuccessWidget ?? statusChild(Icon(Icons.done, color: c));
+    if (isRunning == _ButtonStatus.error) return widget.onErrorWidget ?? statusChild(Icon(Icons.error, color: c));
 
     return widget.child ?? const SizedBox();
+  }
+
+  BoxDecoration boxDecoration() {
+    BorderRadiusGeometry? borderRadius = widget.borderRadius;
+
+    if (widget.roundBorderWhenRunning && isRunning != _ButtonStatus.stable) borderRadius = BorderRadius.circular(100);
+
+    return BoxDecoration(
+      borderRadius: borderRadius,
+      border: widget.border,
+      boxShadow: widget.boxShadow,
+      color: widget.boxShadow == null ? null : Colors.white,
+    );
   }
 
   @override
@@ -123,19 +178,9 @@ class _OnProcessButtonWidgetState extends State<OnProcessButtonWidget> {
       child: Container(
         margin: widget.margin,
         clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          borderRadius: !widget.roundBorderWhenRunning
-              ? widget.borderRadius
-              : isRunning == _ButtonStatus.running
-                  ? BorderRadius.circular(100)
-                  : widget.borderRadius,
-          border: widget.border,
-          boxShadow: widget.boxShadow,
-          color: widget.boxShadow == null ? null : Colors.white,
-        ),
+        decoration: boxDecoration(),
         child: Material(
           color: widget.backgroundColor ?? Theme.of(context).primaryColor,
-          textStyle: widget.textStyle ?? Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).canvasColor, fontWeight: FontWeight.bold),
           child: InkWell(
             onLongPress: widget.onLongPress,
             onTapUp: widget.onTapUp,
@@ -144,6 +189,21 @@ class _OnProcessButtonWidgetState extends State<OnProcessButtonWidget> {
             autofocus: widget.autofocus,
             splashColor: widget.splashColor,
             enableFeedback: widget.enableFeedback,
+            focusNode: widget.focusNode,
+            focusColor: widget.focusColor,
+            highlightColor: widget.highlightColor,
+            hoverColor: widget.hoverColor,
+            mouseCursor: widget.mouseCursor,
+            onDoubleTap: widget.onDoubleTap,
+            onFocusChange: widget.onFocusChange,
+            onHighlightChanged: widget.onHighlightChanged,
+            onSecondaryTap: widget.onSecondaryTap,
+            onSecondaryTapUp: widget.onSecondaryTapUp,
+            onSecondaryTapDown: widget.onSecondaryTapDown,
+            onSecondaryTapCancel: widget.onSecondaryTapCancel,
+            overlayColor: widget.overlayColor,
+            splashFactory: widget.splashFactory,
+            statesController: widget.statesController,
             onTap: !widget.enable
                 ? null
                 : () async {
@@ -176,19 +236,28 @@ class _OnProcessButtonWidgetState extends State<OnProcessButtonWidget> {
                   },
             child: AnimatedSize(
               duration: widget.animationDuration,
-              child: Container(
-                height: widget.height,
-                width: widget.width,
-                padding: widget.contentPadding,
-                constraints: widget.constraints,
-                alignment: isRunning == _ButtonStatus.stable
-                    ? widget.expanded
-                        ? widget.alignment
-                        : null
-                    : widget.expandedIcon ?? widget.expanded
-                        ? widget.alignment
-                        : null,
-                child: child(context),
+              child: DefaultTextStyle(
+                textAlign: widget.textAlign,
+                textHeightBehavior: widget.textHeightBehavior,
+                maxLines: widget.textMaxLines,
+                overflow: widget.textOverflow,
+                softWrap: widget.textWrap,
+                textWidthBasis: widget.textWidthBasis,
+                style: widget.textStyle ?? Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).canvasColor, fontWeight: FontWeight.bold) ?? const TextStyle(),
+                child: Container(
+                  height: widget.height,
+                  width: widget.width,
+                  padding: widget.contentPadding,
+                  constraints: widget.constraints,
+                  alignment: isRunning == _ButtonStatus.stable
+                      ? widget.expanded
+                          ? widget.alignment
+                          : null
+                      : widget.expandedIcon ?? widget.expanded
+                          ? widget.alignment
+                          : null,
+                  child: child(context),
+                ),
               ),
             ),
           ),

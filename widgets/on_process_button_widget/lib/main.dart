@@ -16,7 +16,16 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final Rx<Offset> hoveringOffset = Offset(0, 0).obs;
+  final RxString buttonText = "Hover Here".obs;
+  final RxString processDone = "".obs;
+  final RxBool buttonRunning = true.obs;
+
+  Future<bool?> onCallFunction({bool? type}) async {
+    await Future.delayed(Duration(seconds: 2));
+    return type;
+  }
+
+  final Widget _____spacing = SizedBox(height: 8);
 
   @override
   Widget build(BuildContext context) {
@@ -25,50 +34,96 @@ class _MyAppState extends State<MyApp> {
         body: SafeArea(
           child: Obx(
             () => Container(
+              alignment: Alignment.center,
               width: double.infinity,
               padding: EdgeInsets.all(8.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      OnProcessButtonWidget(
-                        onTap: () async {
-                          await Future.delayed(Duration(seconds: 1));
-                          return false;
-                        },
-                        // child: Icon(Icons.error, color: Colors.white),
-                        // boxShadow: [
-                        //   BoxShadow(
-                        //     offset: Offset(0, 2),
-                        //     color: Colors.black.withOpacity(0.5),
-                        //     blurRadius: 2,
-                        //     spreadRadius: 1,
-                        //   )
-                        // ],
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    //! Hovering effect && On processing loading indicator
+                    OnProcessButtonWidget(
+                      backgroundColor: Colors.amber,
+                      onTap: () async => await onCallFunction(),
+                      onHover: (isEnter) => buttonText.value = isEnter ? "Hi" : "Hover Here",
+                      child: Text(buttonText.value),
+                    ),
+                    _____spacing,
 
-                        roundBorderWhenRunning: true,
-                        onHovering: (offset) {
-                          hoveringOffset.value = offset.localPosition;
-                        },
-                        onHover: (isEnter) {
-                          if (!isEnter) hoveringOffset.value = Offset(0, 0);
-                        },
-                        // expanded: false,
+                    //! Request status - true and false
+                    OnProcessButtonWidget(
+                      backgroundColor: Colors.blue,
+                      onTap: () async => await onCallFunction(type: true),
+                      // onTap: () async => await onCallFunction(type: false),
+                      child: Text("Request status"),
+                    ),
+                    _____spacing,
 
-                        child: Text("Hello"),
-                        // alignment: Alignment.center,
-                        // alignment: Alignment(hoveringOffset.value.dx, hoveringOffset.value.dy),
+                    //! Double process
+                    OnProcessButtonWidget(
+                      backgroundColor: Colors.purple,
+                      onTap: () async {
+                        processDone.value = "Running first task.";
+                        var s = await onCallFunction(type: true);
+                        processDone.value = "First operation status $s";
+                        return s;
+                      },
+                      onDone: (isSuccess) async {
+                        // TODO: You can your homepage here. If onTap function (Login process) return true it will redirect to the homepage.
+                        processDone.value = "Running second task.";
+                        await onCallFunction();
+                        processDone.value = "";
+                      },
+                      child: Text("Double process"),
+                    ),
+                    if (processDone.isNotEmpty) Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: Text("Process status: ${processDone.value}")),
+                    _____spacing,
+
+                    //! Shadow and Icon color can be changed
+                    OnProcessButtonWidget(
+                      iconColor: Colors.black,
+                      backgroundColor: Colors.amberAccent,
+                      onTap: () async => await onCallFunction(type: false),
+                      boxShadow: [
+                        BoxShadow(offset: Offset(0, 2), color: Colors.black54, blurRadius: 2)
+                      ],
+                      child: Text("My shadow and Icon color can be changed"),
+                    ),
+                    _____spacing,
+
+                    //! On processing widget is changeable
+                    OnProcessButtonWidget(
+                      backgroundColor: Colors.green,
+                      onTap: () async => await onCallFunction(type: true),
+                      onRunningWidget: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text("On processing widget is changed"),
+                        ],
                       ),
-                      // Positioned(
-                      //   left: hoveringOffset.value.dx - 4,
-                      //   top: hoveringOffset.value.dy - 4,
-                      //   child: Container(padding: EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.amber, shape: BoxShape.circle)),
-                      // ),
-                    ],
-                  ),
-                ],
+                      onSuccessWidget: Icon(
+                        Icons.wallpaper_rounded,
+                        color: Colors.white,
+                      ),
+                      child: Text("On processing and Status widget"),
+                    ),
+                    _____spacing,
+
+                    //! Use as a card
+                    OnProcessButtonWidget(
+                      enable: false,
+                      iconColor: Colors.amber,
+                      backgroundColor: Colors.white,
+                      child: Text(
+                        "I am a card",
+                        style: TextStyle(color: Colors.black),
+                      ),
+                      boxShadow: [
+                        BoxShadow(offset: Offset(0, 2), color: Colors.black54, blurRadius: 2)
+                      ],
+                    ),
+                    _____spacing,
+                  ],
+                ),
               ),
             ),
           ),
